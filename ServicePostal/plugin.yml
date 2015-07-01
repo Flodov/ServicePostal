@@ -1,0 +1,3 @@
+name : ServicePostal
+main : com.bukkit.flodov.ServicePostal.ServicePostalMain
+version : 0.1
