@@ -9,6 +9,7 @@ import com.bukkit.flodov.ServicePostal.ServicePostalMain;
 
 public class Listeners implements Listener{
 
+	
 	@EventHandler
 	private void onPlayerJoin(PlayerJoinEvent event) {
 	String message = "Bonjour";

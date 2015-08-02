@@ -8,6 +8,7 @@ import net.citizensnpcs.api.CitizensAPI;
 import net.citizensnpcs.api.npc.NPC;
 import net.citizensnpcs.api.npc.NPCRegistry;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
@@ -19,10 +20,13 @@ import com.bukkit.flodov.exceptions.PGNoFoundException;
 import com.bukkit.flodov.exceptions.PLExistanteException;
 import com.bukkit.flodov.exceptions.PLNoTrouveeException;
 import com.bukkit.flodov.exceptions.ServicePostalException;
+import com.bukkit.flodov.tasks.PNJPosteGeneralRunnable;
 
 public class PosteGenerale extends Poste {
 
 	public static boolean init = false;
+	
+	private PNJPosteGeneralRunnable thread;
 	
 	protected List<PosteLocale> reseau;
 	
@@ -47,7 +51,9 @@ public class PosteGenerale extends Poste {
 				reseau = new ArrayList<PosteLocale>();
 				name = "PosteGénéral";
 				init = true;
-				
+				thread = new PNJPosteGeneralRunnable(this);
+				Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("ServicePostal"), thread, 0, 10 * 20L);
+				//TODO Faire gestion pnj
 			}
 			else{
 				throw new NoChestException();
@@ -104,5 +110,8 @@ public class PosteGenerale extends Poste {
 			case(1):PL.addBALPublique(coffre, nom);break;
 		}
 		
+	}
+	public List<PosteLocale> getReseau(){
+		return reseau;
 	}
 }

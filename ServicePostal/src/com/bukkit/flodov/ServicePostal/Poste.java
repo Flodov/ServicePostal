@@ -1,5 +1,6 @@
 package com.bukkit.flodov.ServicePostal;
 
+import org.bukkit.Location;
 import org.bukkit.block.Chest;
 
 import net.citizensnpcs.api.npc.NPC;
@@ -26,6 +27,12 @@ public abstract class Poste {
 		return name;
 	}
 	
-	
+	public void bouge(Location loc){
+		facteur.getNavigator().setTarget(loc);
+	}
+
+	public boolean arrive(Location loc){
+		return facteur.getEntity().getLocation() == loc;
+	}
 	
 }

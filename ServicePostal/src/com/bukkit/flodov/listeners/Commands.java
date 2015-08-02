@@ -14,6 +14,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 import com.bukkit.flodov.ServicePostal.PosteGenerale;
+import com.bukkit.flodov.ServicePostal.TestHello;
 import com.bukkit.flodov.exceptions.ServicePostalException;
 
 @SuppressWarnings("unused")
@@ -39,7 +40,7 @@ public class Commands implements CommandExecutor{
 				return false;
 			}
 
-				if(cmd.getName().equalsIgnoreCase("poste")){
+				if(cmd.getName().equalsIgnoreCase("poste") && arg3.length != 0){
 					if(arg3[0].equalsIgnoreCase("createPG")) {
 						/*
 						player.sendMessage(ServicePostalMain.config.getString("messages.2"));
@@ -125,9 +126,12 @@ public class Commands implements CommandExecutor{
 						}
 						return true;
 					}
+					if(arg3[0].equalsIgnoreCase("test")){
+						Bukkit.getScheduler().cancelTasks(Bukkit.getPluginManager().getPlugin("ServicePostal"));
+					}
 				}
 				
-				return true;
+				return false;
 	}
 
 }
