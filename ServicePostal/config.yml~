@@ -1,0 +1,6 @@
+#Bordel ...
+messages :
+  '1': Bonjour !
+  '2': Salut !
+  '3': /player/ vous salut !
+  '4': /player/ vient d'arriver !

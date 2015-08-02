@@ -1,3 +1,8 @@
 name : ServicePostal
 main : com.bukkit.flodov.ServicePostal.ServicePostalMain
 version : 0.1
+commands :
+ poste test :
+  usage : /createBAL <nom> -publique|privee <proprietaire>
+ poste :
+  usage : et ok !
