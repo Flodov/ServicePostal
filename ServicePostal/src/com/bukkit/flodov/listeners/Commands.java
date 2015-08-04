@@ -5,16 +5,19 @@ import java.sql.Statement;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.plugin.Plugin;
 
 import com.bukkit.flodov.ServicePostal.PosteGenerale;
 import com.bukkit.flodov.ServicePostal.TestHello;
+import com.bukkit.flodov.exceptions.PLNoTrouveeException;
 import com.bukkit.flodov.exceptions.ServicePostalException;
 
 @SuppressWarnings("unused")
@@ -128,6 +131,29 @@ public class Commands implements CommandExecutor{
 					}
 					if(arg3[0].equalsIgnoreCase("test")){
 						Bukkit.getScheduler().cancelTasks(Bukkit.getPluginManager().getPlugin("ServicePostal"));
+						return true;
+					}
+					if(arg3[0].equalsIgnoreCase("envoyer")) {
+						
+						switch(arg3[1].toLowerCase()){
+						case("-lettre"):
+							if(player.getItemInHand().getType() == Material.WRITTEN_BOOK){
+								if(!arg3[2].isEmpty() && !arg3[3].isEmpty()){
+									try {
+										PG.PosterLettre( player.getItemInHand(), arg3[2], arg3[3],arg3[4]);
+									} catch (ServicePostalException e) {
+										// TODO Auto-generated catch block
+										e.toString(player);
+									}
+								}
+							}
+							else{
+								player.sendMessage("Veuillez tenir la lettre à envoyer.");
+							}
+						case("-colis"):
+							
+						}
+						return true;
 					}
 				}
 				

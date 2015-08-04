@@ -27,12 +27,10 @@ public abstract class Poste {
 		return name;
 	}
 	
-	public void bouge(Location loc){
-		facteur.getNavigator().setTarget(loc);
-	}
 
 	public boolean arrive(Location loc){
-		return facteur.getEntity().getLocation() == loc;
+		
+		return facteur.getEntity().getLocation().distance(loc) <= 1;
 	}
 	
 }

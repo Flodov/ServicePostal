@@ -7,6 +7,8 @@ import java.util.List;
 import net.citizensnpcs.api.CitizensAPI;
 import net.citizensnpcs.api.npc.NPCRegistry;
 
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
@@ -15,11 +17,13 @@ import org.bukkit.entity.EntityType;
 import com.bukkit.flodov.exceptions.BALPubliqueExistanteException;
 import com.bukkit.flodov.exceptions.NoChestException;
 import com.bukkit.flodov.exceptions.ServicePostalException;
+import com.bukkit.flodov.tasks.PosteLocaleRunnable;
 
 public class PosteLocale extends Poste {
 	private PosteGenerale PG;
 	protected List<BALPublique> reseau_publique;
 	protected List<BALPrivee>  reseau_prive;
+	private PosteLocaleRunnable thread;
 	
 	public PosteLocale(){
 		
@@ -37,6 +41,9 @@ public class PosteLocale extends Poste {
 		this.PG = PG;
 		reseau_publique = new ArrayList<BALPublique>();
 		reseau_prive = new ArrayList<BALPrivee>();
+		facteur.data().set("origine",this);
+		facteur.data().set("mutex",false);
+		thread = new PosteLocaleRunnable(this);
 
 	}
 	
@@ -67,6 +74,7 @@ public class PosteLocale extends Poste {
 			}
 			
 		}
+		Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("ServicePostal"), thread, 0, 15 * 20L);
 		//On vérifie si le nom n'est pas déjà pris
 		Iterator<BALPublique> ite2 = reseau_publique.iterator();
 		while(ite2.hasNext()){
@@ -77,6 +85,7 @@ public class PosteLocale extends Poste {
 		
 		Chest c = (Chest) coffre.getState();
 		reseau_publique.add(new BALPublique(nom,c));
+		
 	}
 public void addBALPrivee(Block coffre, String nom) throws ServicePostalException{
 		
@@ -114,27 +123,28 @@ public void addBALPrivee(Block coffre, String nom) throws ServicePostalException
 		
 		
 		Chest c = (Chest) coffre.getState();
-		reseau_publique.add(new BALPublique(nom,c));
+		reseau_prive.add(new BALPrivee(nom,c));
 	}
 
-	public boolean possedeBALPublique(Chest coffre){
-		//Si la boite est possédée par la PL
-		Iterator<BALPublique> ite = reseau_publique.iterator();
-		while(ite.hasNext()){
-			BALPublique tmp = ite.next();
-			if(tmp.getBoite().getLocation().equals(coffre.getLocation())) return true;
-		}
+	public void NpcInitTournee(){
+		List<BALPublique> tournee = new ArrayList<BALPublique>();
 		
-		return false;
+		for(BALPublique PL : reseau_publique){
+			tournee.add(PL);
+		}
+		facteur.data().remove("tournee");
+		facteur.data().set("tournee", tournee);
+		facteur.data().set("sens", true);
+		facteur.data().set("mutex",false);
+		bouge(reseau_publique.get(0).getBoite().getLocation());
+		facteur.data().set("mutex",true);
 	}
-	public boolean possedeBALPrivee(Chest coffre){
-		Iterator<BALPrivee> ite = reseau_prive.iterator();
-		while(ite.hasNext()){
-			BALPrivee tmp = ite.next();
-			if(tmp.getBoite().equals(coffre)) return true;
-		}
-		
-		return false;
+	
+	public void bouge(Location loc){
+		facteur.getNavigator().setTarget(loc);
+	}
+	public boolean NpcDispo(){
+		return !(boolean) facteur.data().get("mutex");
 	}
 
 }

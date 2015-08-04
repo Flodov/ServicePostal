@@ -1,6 +1,8 @@
 package com.bukkit.flodov.ServicePostal;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -9,11 +11,15 @@ import net.citizensnpcs.api.npc.NPC;
 import net.citizensnpcs.api.npc.NPCRegistry;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.EntityType;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.BookMeta;
 
+import com.bukkit.flodov.exceptions.BALPriveeNoFoundException;
 import com.bukkit.flodov.exceptions.NoChestException;
 import com.bukkit.flodov.exceptions.PGExistanteException;
 import com.bukkit.flodov.exceptions.PGNoFoundException;
@@ -52,7 +58,8 @@ public class PosteGenerale extends Poste {
 				name = "PosteGénéral";
 				init = true;
 				thread = new PNJPosteGeneralRunnable(this);
-				Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("ServicePostal"), thread, 0, 10 * 20L);
+				facteur.data().set("origine", this);
+				Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("ServicePostal"), thread, 0, 15 * 20L);
 				//TODO Faire gestion pnj
 			}
 			else{
@@ -82,6 +89,7 @@ public class PosteGenerale extends Poste {
 					}
 				}
 				reseau.add(new PosteLocale(this,chest,name));
+				NpcInitTournee();
 			}else{
 				throw new NoChestException();
 			}
@@ -113,5 +121,95 @@ public class PosteGenerale extends Poste {
 	}
 	public List<PosteLocale> getReseau(){
 		return reseau;
+	}
+	
+	public void NpcInitTournee(){
+		List<PosteLocale> tournee = new ArrayList<PosteLocale>();
+		
+		for(PosteLocale PL : reseau){
+			tournee.add(PL);
+		}
+		facteur.data().remove("tournee");
+		facteur.data().set("tournee", tournee);
+	}
+	
+	public List<PosteLocale> getNpcTournee(){
+		return facteur.data().get("tournee");
+	}
+	
+	public void removeEtape(){
+		List<PosteLocale> tournee = facteur.data().get("tournee");
+		tournee.remove(0);
+		facteur.data().remove("tournee");
+		facteur.data().set("tournee", tournee);
+		
+	}
+	public boolean TourneeHasNext(){
+		List<PosteLocale> tournee = facteur.data().get("tournee");
+		return tournee.size() != 0;
+	}
+	public void bouge(Location loc){
+		facteur.getNavigator().setTarget(loc);
+		facteur.data().set("sens", true);
+	}
+	
+	public void PosterLettre(ItemStack lettre, String PL_name, String BAL_name, String destinataire_name) throws ServicePostalException{
+		
+		BookMeta tmp = (BookMeta) lettre.getItemMeta();
+		
+		
+		boolean trouve = false;
+		PosteLocale PL_dest = null;
+		for(PosteLocale PL : reseau){
+			if(PL.getName().equalsIgnoreCase(PL_name)){
+				trouve = true;
+				PL_dest = PL;
+			}
+		}
+		if(!trouve) throw new PLNoTrouveeException();
+		trouve = false;
+		BALPrivee BAL_dest = null;
+		for(BALPrivee BAL : PL_dest.reseau_prive){
+			if(BAL.getNom().equalsIgnoreCase(BAL_name)){
+				trouve = true;
+				BAL_dest = BAL;
+				
+			}
+		}
+		
+		if(!trouve) throw new BALPriveeNoFoundException();
+		
+		List<String> pages = new ArrayList<String>( tmp.getPages());
+		SimpleDateFormat formater = new SimpleDateFormat("'le' dd MMMM yyyy 'à' hh:mm:ss");
+		pages.add(0, "------------------\n    Cadre d'envoi\n------------------\n"+"Expéditeur : " +tmp.getAuthor()+"\nDestinataire : "+destinataire_name+"\nAdresse : "+BAL_name+"\nLieu : "+PL_name+"\nDate : "+formater.format(new Date()));
+		tmp.setPages(pages);
+		List<String> destination = new ArrayList<String>();
+		destination.add(PL_name);
+		destination.add(BAL_name);
+		destination.add(destinataire_name);
+
+		tmp.setLore(destination);
+		lettre.setItemMeta(tmp);
+		
+		System.out.println(tmp.getLore());
+		
+		
+
+		/*ItemStack writtenBook = new Material(Material.WRITTEN_BOOK);
+BookMeta bookMeta = (BookMeta) writtenBook.getItemMeta();
+bookMeta.setTitle(title);
+bookMeta.setAuthor(author);
+bookMeta.setPages(text);
+writtenBook.setItemMeta(bookMeta);
+*/
+		
+		/*
+		 * 
+		 * List<String> pages = new ArrayList<String>();
+pages.add("Hello, welcome to TimeVisualSale's server!"); // Page 1
+pages.add("Website: timevisualsales.com"); // Page 2
+pages.add("Hope you enjoy your stay/play!"); // Page 3
+		 */
+		
 	}
 }
