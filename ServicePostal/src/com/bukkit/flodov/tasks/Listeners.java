@@ -51,23 +51,24 @@ public class Listeners implements Listener{
 						List<BookMeta> sacoche =  npc.data().get("sacoche");
 						ItemStack tmp = new ItemStack(Material.WRITTEN_BOOK);
 						int i = PL.getBoite().getBlockInventory().firstEmpty();
-						for(BookMeta item : sacoche){
-							
-							List<String> contenu = new ArrayList<String>( item.getPages());
-							SimpleDateFormat formater = new SimpleDateFormat("'le' dd MMMM yyyy 'à' hh:mm:ss");
-							contenu.add(0, "------------------\n    Service Postal\n------------------\nEnvoyé depuis la Boîte Publique :\n"+tournee.get(0).getNom()+"\nA "+PL.getName()+"\n\nAffranchissement : \n"+formater.format(new Date()));
-							item.setPages(contenu);
-							tmp.setItemMeta(item);
-							
-							PL.getBoite().getBlockInventory().setItem(i++, tmp);
+						if(sacoche != null && tournee !=  null){
+							for(BookMeta item : sacoche){
+								
+								List<String> contenu = new ArrayList<String>( item.getPages());
+								SimpleDateFormat formater = new SimpleDateFormat("'le' dd MMMM yyyy 'à' hh:mm:ss");
+								contenu.add(0, "------------------\n    Service Postal\n------------------\nEnvoyé depuis la Boîte Publique :\n"+tournee.get(0).getNom()+"\nA "+PL.getName()+"\n\nAffranchissement : \n"+formater.format(new Date()));
+								item.setPages(contenu);
+								tmp.setItemMeta(item);
+								
+								PL.getBoite().getBlockInventory().setItem(i++, tmp);
+							}
+							sacoche.clear();
+							sacoche = null;
+							npc.data().set("sacoche", null);
+						
+							tournee.remove(0);//d'ou il vient
+							npc.data().set("tournee",tournee);
 						}
-						sacoche.clear();
-						sacoche = null;
-						npc.data().set("sacoche", null);
-						
-						tournee.remove(0);//d'ou il vient
-						npc.data().set("tournee",tournee);
-						
 						//On prépare la suite
 						if(tournee.size() != 0){
 							npc.data().set("sens", true);
@@ -114,13 +115,14 @@ public class Listeners implements Listener{
 				else{
 					//aller
 					npc.data().set("sens", false);
-					if(npc.data().has("main")){
+					if(npc.data().get("main") != null){
 						ItemStack item = npc.data().get("main");
 						BookMeta courrier = (BookMeta) item.getItemMeta();
 						for(BALPrivee BAL : PL.getReseau_prive()){
 							if(BAL.getNom().equalsIgnoreCase(courrier.getLore().get(1))){
 								BAL.getBoite().getBlockInventory().addItem(item);
-								npc.data().remove("main");
+								npc.data().set("main",null);
+								//npc.data().set("sacoche", new ArrayList<BookMeta>());
 								npc.getNavigator().setTarget(PL.getBoite().getLocation());
 								break;
 							}

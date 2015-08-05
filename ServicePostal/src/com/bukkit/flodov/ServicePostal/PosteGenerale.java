@@ -307,4 +307,66 @@ pages.add("Hope you enjoy your stay/play!"); // Page 3
 		}
 		
 	}
+	public void posterColis(ItemStack lettre, String PL_name, String BAL_name, String proprietaire_name, Block coffre) throws ServicePostalException{
+		
+		BookMeta tmp = (BookMeta) lettre.getItemMeta();
+		
+		boolean trouve = false;
+		PosteLocale PL_dest = null;
+		for(PosteLocale PL : reseau){
+			if(PL.getName().equalsIgnoreCase(PL_name)){
+				trouve = true;
+				PL_dest = PL;
+				break;
+			}
+		}
+		if(!trouve) throw new PLNoTrouveeException();
+		trouve = false;
+		for(BALPrivee BAL : PL_dest.reseau_prive){
+			if(BAL.getNom().equalsIgnoreCase(BAL_name)){
+				trouve = true;
+				break;
+				
+			}
+		}
+		
+		if(!trouve) throw new BALPriveeNoFoundException();
+		
+		if(this.boite.equals(coffre)) throw new NoChestException();
+		
+		for(PosteLocale PL : reseau){
+			if(PL.getBoite().equals(coffre)) throw new NoChestException();
+			for(BALPublique BAL : PL.getReseau_publique()){
+				if(BAL.getBoite().equals(coffre)) throw new NoChestException();
+			}
+			for(BALPrivee BAL : PL.getReseau_prive()){
+				if(BAL.getBoite().equals(coffre)) throw new NoChestException();
+			}
+		}
+		
+		String contenu = new String();
+		Chest boite = (Chest) coffre.getState();
+		for(ItemStack item : boite.getBlockInventory()){
+			if(item != null)
+			contenu+=""+(item.getType()+" "+item.getAmount()+"\n");
+		}
+		
+		List<String> pages = new ArrayList<String>( tmp.getPages());
+		SimpleDateFormat formater = new SimpleDateFormat("'le' dd MMMM yyyy 'à' hh:mm:ss");
+		pages.add(0, contenu);
+		pages.add(0, "------------------\n    Cadre d'envoi\n------------------\n"+"Expéditeur : " +tmp.getAuthor()+"\nDestinataire : "+proprietaire_name+"\nAdresse : "+BAL_name+"\nLieu : "+PL_name+"\nDate : "+formater.format(new Date()));
+		
+		
+		tmp.setPages(pages);
+		tmp.setDisplayName("colis");
+		List<String> destination = new ArrayList<String>();
+		destination.add(PL_name);
+		destination.add(BAL_name);
+		destination.add(proprietaire_name);
+
+		tmp.setLore(destination);
+		lettre.setItemMeta(tmp);
+		boite.getBlockInventory().clear();
+		coffre.breakNaturally();
+	}
 }
