@@ -59,8 +59,8 @@ public class PosteGenerale extends Poste {
 				init = true;
 				thread = new PNJPosteGeneralRunnable(this);
 				facteur.data().set("origine", this);
+				facteur.data().set("mutex", false);
 				Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("ServicePostal"), thread, 0, 15 * 20L);
-				//TODO Faire gestion pnj
 			}
 			else{
 				throw new NoChestException();
@@ -89,7 +89,6 @@ public class PosteGenerale extends Poste {
 					}
 				}
 				reseau.add(new PosteLocale(this,chest,name));
-				NpcInitTournee();
 			}else{
 				throw new NoChestException();
 			}
@@ -125,12 +124,17 @@ public class PosteGenerale extends Poste {
 	
 	public void NpcInitTournee(){
 		List<PosteLocale> tournee = new ArrayList<PosteLocale>();
-		
+		tournee.add(null);
 		for(PosteLocale PL : reseau){
 			tournee.add(PL);
 		}
 		facteur.data().remove("tournee");
 		facteur.data().set("tournee", tournee);
+		facteur.data().set("mutex", true);
+		facteur.data().set("sens", false);
+		facteur.data().set("sacoche", new ArrayList<ItemStack>());
+		facteur.teleport(this.boite.getLocation(),null);
+		tournee();
 	}
 	
 	public List<PosteLocale> getNpcTournee(){
@@ -164,15 +168,15 @@ public class PosteGenerale extends Poste {
 			if(PL.getName().equalsIgnoreCase(PL_name)){
 				trouve = true;
 				PL_dest = PL;
+				break;
 			}
 		}
 		if(!trouve) throw new PLNoTrouveeException();
 		trouve = false;
-		BALPrivee BAL_dest = null;
 		for(BALPrivee BAL : PL_dest.reseau_prive){
 			if(BAL.getNom().equalsIgnoreCase(BAL_name)){
 				trouve = true;
-				BAL_dest = BAL;
+				break;
 				
 			}
 		}
@@ -191,8 +195,6 @@ public class PosteGenerale extends Poste {
 		tmp.setLore(destination);
 		lettre.setItemMeta(tmp);
 		
-		System.out.println(tmp.getLore());
-		
 		
 
 		/*ItemStack writtenBook = new Material(Material.WRITTEN_BOOK);
@@ -210,6 +212,99 @@ pages.add("Hello, welcome to TimeVisualSale's server!"); // Page 1
 pages.add("Website: timevisualsales.com"); // Page 2
 pages.add("Hope you enjoy your stay/play!"); // Page 3
 		 */
+		
+	}
+	public boolean NpcDispo() {
+		return !(boolean) facteur.data().get("mutex");
+	}
+	
+	public void tournee(){
+		//tournée de la PG
+		List<ItemStack> sacoche = facteur.data().get("sacoche");
+		List<PosteLocale> tournee = facteur.data().get("tournee");
+		PosteLocale PL = tournee.get(0);
+		
+		if(!(boolean) facteur.data().get("sens")){
+			//retour
+				PosteGenerale PG = facteur.data().get("origine");
+				
+				//on vide la sacoche
+				for(ItemStack item : sacoche){
+					PG.getBoite().getBlockInventory().addItem(item);
+					
+				}
+				sacoche.clear();
+				//on remplit pour la nouvelle tournee
+				
+				tournee.remove(0);
+				facteur.data().set("tournee",tournee);
+				
+				if(tournee.size() != 0){
+					PL = tournee.get(0);
+					
+				
+					for(ItemStack item : PG.getBoite().getBlockInventory()){
+						if(item != null){
+							if(item.getType()==Material.WRITTEN_BOOK){
+								BookMeta courrier = (BookMeta) item.getItemMeta();
+								if(courrier.hasLore()){
+									if(courrier.getLore().get(0).equalsIgnoreCase(PL.getName())){
+										sacoche.add(item);
+										PG.getBoite().getBlockInventory().remove(item);
+									}
+								}
+							}
+						}
+						
+					}
+					
+					facteur.data().set("sacoche", sacoche);
+					facteur.data().set("sens", true);
+					//facteur.getNavigator().setTarget(tournee.get(0).getBoite().getLocation());
+					facteur.teleport(tournee.get(0).getBoite().getLocation(), null);
+					tournee();
+				}
+				else{
+					facteur.data().set("mutex",false);
+				}
+				
+				
+			}
+			
+		
+		else{
+			//aller
+			
+			
+			
+			//on vide la sacoche
+			for(ItemStack item : sacoche){
+				PL.getBoite().getBlockInventory().addItem(item);
+			}
+			sacoche.clear();
+			
+			//On rempli à nouveau des courriers de la PL
+			for(ItemStack item : PL.getBoite().getBlockInventory()){
+				if(item != null){
+					if(item.getType()==Material.WRITTEN_BOOK){
+						BookMeta courrier = (BookMeta) item.getItemMeta();
+						if(courrier.hasLore()){
+							if(!courrier.getLore().get(0).equalsIgnoreCase(PL.getName())){
+								sacoche.add(0, item);
+								PL.getBoite().getBlockInventory().remove(item);
+							}
+						}
+					}
+						
+				}
+			}
+			
+			facteur.data().set("sacoche", sacoche);
+			
+			facteur.data().set("sens", false);
+			facteur.teleport((Location) ((Poste) facteur.data().get("origine")).getBoite().getLocation(),null);
+			tournee();
+		}
 		
 	}
 }

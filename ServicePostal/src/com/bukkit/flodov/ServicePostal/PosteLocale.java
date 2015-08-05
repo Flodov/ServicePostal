@@ -126,9 +126,20 @@ public void addBALPrivee(Block coffre, String nom) throws ServicePostalException
 		reseau_prive.add(new BALPrivee(nom,c));
 	}
 
+	public List<BALPublique> getReseau_publique() {
+	return reseau_publique;
+}
+
+
+public List<BALPrivee> getReseau_prive() {
+	return reseau_prive;
+}
+
+
+
+
 	public void NpcInitTournee(){
 		List<BALPublique> tournee = new ArrayList<BALPublique>();
-		
 		for(BALPublique PL : reseau_publique){
 			tournee.add(PL);
 		}
