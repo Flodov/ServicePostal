@@ -1,9 +1,47 @@
 name : ServicePostal
 main : com.bukkit.flodov.ServicePostal.ServicePostalMain
-version : 0.1
-commands :
- poste test :
-  usage : /createBAL <nom> -publique|privee <proprietaire>
- poste :
-  usage : et ok !
+version : 1.0
+author : Flodov
 depend: [Citizens]
+website : https://github.com/Flodov/ServicePostal
+description: Plugin de gestion d'un réseau postal
+commands :
+ poste :
+  description : Commandes du Service Postal
+  usage : Référez vous à la documentation.
+permissions :
+  servicepostal.*:
+    description: Vous octroie toutes les permissions
+    children: 
+      servicepostal.createpg: true
+      servicepostal.createbal.*: true
+      servicepostal.envoyer: true
+      servicepostal.recevoir: true
+      servicepostal.save: true
+  servicepostal.createpg:
+    description: Créer la Poste Générale
+    default : false
+  servicepostal.createpl:
+    description: Créer une Poste Locale
+    default: false
+  servicepostal.createbal.*:
+    description: Créer une boite aux lettres
+    default: false
+    children:
+      servicepostal.createbal.public: true
+      servicepostal.createbal.private: true
+  servicepostal.createbal.public:
+    description: Créer une boite aux lettres publique
+    default: false
+  servicepostal.createbal.private:
+    description: Créer une boite aux lettre privee
+    default: false
+  servicepostal.envoyer:
+    description: Envoyer courriers et lettres
+    default: false
+  servicepostal.recevoir:
+    description: Recevoir du courrier
+    default: false 
+  servicepostal.save:
+    description: Sauvegarde le Service Postal
+    default: false

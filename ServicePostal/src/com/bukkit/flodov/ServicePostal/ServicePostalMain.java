@@ -15,7 +15,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import com.bukkit.flodov.listeners.Commands;
-import com.bukkit.flodov.tasks.Listeners;
+import com.bukkit.flodov.listeners.Listeners;
 
 public class ServicePostalMain extends JavaPlugin {
 
@@ -28,7 +28,6 @@ public class ServicePostalMain extends JavaPlugin {
 	public void onEnable(){
 		loadConfig();
 		this.getServer().getPluginManager().registerEvents(new Listeners(), this);
-		
 		fichier = new File(nomFichier);
 		if(fichier.exists()){
 			try {
@@ -86,7 +85,6 @@ public class ServicePostalMain extends JavaPlugin {
 		 Commands commandes = new Commands(this,null,PG);
 
 		this.getCommand("poste").setExecutor(commandes);
-		this.getCommand("poste test").setExecutor(commandes);//a enlever
 
 		
 	}

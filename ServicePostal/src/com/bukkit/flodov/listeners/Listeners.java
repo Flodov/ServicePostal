@@ -1,4 +1,4 @@
-package com.bukkit.flodov.tasks;
+package com.bukkit.flodov.listeners;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -25,13 +25,10 @@ import com.bukkit.flodov.ServicePostal.PosteLocale;
 public class Listeners implements Listener{
 
 	
-	/*@EventHandler
-	private void onPlayerJoin(PlayerJoinEvent event) {
-	String message = "Bonjour";
+	/*
 	ServicePostalMain.config.getString("messages.4").replace("/player/", 
-	event.getPlayer().getName());
-	event.setJoinMessage(ChatColor.AQUA + message);
-	}*/
+	A ENLEVER
+	*/
 	@EventHandler
 	public void onNavigationComplete(NavigationCompleteEvent event){
 		
