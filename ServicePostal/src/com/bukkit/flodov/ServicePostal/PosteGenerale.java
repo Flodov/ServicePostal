@@ -1,5 +1,11 @@
 package com.bukkit.flodov.ServicePostal;
 
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -18,6 +24,7 @@ import org.bukkit.block.Chest;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
+import org.bukkit.util.Vector;
 
 import com.bukkit.flodov.exceptions.BALPriveeNoFoundException;
 import com.bukkit.flodov.exceptions.NoChestException;
@@ -28,34 +35,55 @@ import com.bukkit.flodov.exceptions.PLNoTrouveeException;
 import com.bukkit.flodov.exceptions.ServicePostalException;
 import com.bukkit.flodov.tasks.PNJPosteGeneralRunnable;
 
-public class PosteGenerale extends Poste {
+public class PosteGenerale extends Poste{
+
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -5472691240981149922L;
 
 	public static boolean init = false;
 	
 	private PNJPosteGeneralRunnable thread;
 	
 	protected List<PosteLocale> reseau;
+	protected String nomFichier = "saveSP";
+	protected static NPCRegistry registry;
 	
 	public PosteGenerale(){}
 	public PosteGenerale(NPC facteur, Chest boite, List<PosteLocale> reseau) {
 		super(facteur, boite);
 		this.reseau = reseau;
-		// TODO Auto-generated constructor stub + load config
 	}
-
+	
+	public  PosteGenerale(SauvegardeClasse sc){
+		init = true;
+		Location loc = new Vector(sc.getCoord().get(0),sc.getCoord().get(1),sc.getCoord().get(2)).toLocation(Bukkit.getWorlds().get(0));
+		boite = (Chest) loc.getBlock().getState();
+		registry = CitizensAPI.getNPCRegistry();
+		facteur = registry.createNPC(EntityType.PLAYER, "Intendant");
+		facteur.spawn(boite.getLocation());
+		name = sc.getNom();
+		thread = new PNJPosteGeneralRunnable(this);
+		facteur.data().set("origine", this);
+		facteur.data().set("mutex", false);
+		reseau = new ArrayList<PosteLocale>();
+		Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("ServicePostal"), thread, 0, 15 * 20L);
+	}
+	
 	public void initialisation(Block block) throws Exception{
 		//On initialise un coffre + npc pour la PG
 		if( !init ) {
 			
-			
 			if(block.getType() == Material.CHEST){
 				boite = (Chest) block.getState();
-				NPCRegistry registry = CitizensAPI.getNPCRegistry();
+				
+				registry = CitizensAPI.getNPCRegistry();
 				//On crée le PNJ
 				facteur = registry.createNPC(EntityType.PLAYER, "Intendant");
 				facteur.spawn(boite.getLocation());
 				reseau = new ArrayList<PosteLocale>();
-				name = "PosteGénéral";
+				name = "PosteGénérale";
 				init = true;
 				thread = new PNJPosteGeneralRunnable(this);
 				facteur.data().set("origine", this);
@@ -71,6 +99,10 @@ public class PosteGenerale extends Poste {
 		
 		
 		
+	}
+	
+	public void addPL(SauvegardeClasse sc){
+		reseau.add(new PosteLocale(sc,this));
 	}
 	
 	public void addPL(Block coffre, String name) throws Exception{
@@ -368,5 +400,57 @@ pages.add("Hope you enjoy your stay/play!"); // Page 3
 		lettre.setItemMeta(tmp);
 		boite.getBlockInventory().clear();
 		coffre.breakNaturally();
+	}
+	
+	public void save(){
+		
+		List<SauvegardeClasse> tab = new ArrayList<SauvegardeClasse>();
+		
+		//On ajoute la PG
+		tab.add(new SauvegardeClasse(getCoord(),TypeClasse.PG,facteur.getUniqueId(),null,this.name));
+		//on va ajouter chaque PL
+		for(PosteLocale PL : reseau){
+			tab.add(new SauvegardeClasse(PL.getCoord(),TypeClasse.PL,PL.getIDNPC(),null,PL.name));
+			
+			for(BALPublique BAL : PL.getReseau_publique()){
+				tab.add(new SauvegardeClasse(BAL.getCoord(),TypeClasse.BALPublique, null,PL.getName(),BAL.getNom()));
+			}
+			for(BALPrivee BAL : PL.getReseau_prive()){
+				tab.add(new SauvegardeClasse(BAL.getCoord(),TypeClasse.BALPrivee, null,PL.getName(),BAL.getNom()));
+			}
+		}
+		
+		
+		
+		try{
+            // On crée la sortie vers le fichier
+			File fichier = new File(ServicePostalMain.nomFichier);
+			
+			ObjectOutputStream  out = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(fichier)));
+			int longueur = tab.size();
+			out.writeInt(longueur);
+			
+            for(SauvegardeClasse tmp1 : tab ){
+            	out.writeObject(tmp1);
+            }
+            out.close();
+            
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+           
+        } catch (IOException e) {
+            e.printStackTrace();
+           
+        }
+		
+
+		
+	}
+	
+	public NPCRegistry getRegistry(){
+		return registry;
+	}
+	public void setRegistry(NPCRegistry r){
+		registry = r;
 	}
 }

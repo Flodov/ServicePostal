@@ -6,3 +6,4 @@ commands :
   usage : /createBAL <nom> -publique|privee <proprietaire>
  poste :
   usage : et ok !
+depend: [Citizens]

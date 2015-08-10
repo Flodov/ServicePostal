@@ -20,7 +20,6 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.Plugin;
 
 import com.bukkit.flodov.ServicePostal.PosteGenerale;
-import com.bukkit.flodov.ServicePostal.TestHello;
 import com.bukkit.flodov.exceptions.PLNoTrouveeException;
 import com.bukkit.flodov.exceptions.ServicePostalException;
 
@@ -206,6 +205,11 @@ public class Commands implements CommandExecutor{
 								   
 							}
 						}
+					}
+					if(arg3[0].equalsIgnoreCase("save")){
+						PG.save();
+						player.sendMessage("Sauvegarde terminée");
+						return true;
 					}
 					
 				}

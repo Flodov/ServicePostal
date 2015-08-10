@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import net.citizensnpcs.api.CitizensAPI;
 import net.citizensnpcs.api.npc.NPCRegistry;
 
 import org.bukkit.Bukkit;
@@ -13,6 +12,7 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.EntityType;
+import org.bukkit.util.Vector;
 
 import com.bukkit.flodov.exceptions.BALPubliqueExistanteException;
 import com.bukkit.flodov.exceptions.NoChestException;
@@ -20,6 +20,10 @@ import com.bukkit.flodov.exceptions.ServicePostalException;
 import com.bukkit.flodov.tasks.PosteLocaleRunnable;
 
 public class PosteLocale extends Poste {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = -5768327087262767940L;
 	private PosteGenerale PG;
 	protected List<BALPublique> reseau_publique;
 	protected List<BALPrivee>  reseau_prive;
@@ -33,7 +37,7 @@ public class PosteLocale extends Poste {
 
 	public PosteLocale(PosteGenerale PG,Chest coffre, String name) {
 		
-		NPCRegistry registry = CitizensAPI.getNPCRegistry();
+		NPCRegistry registry = PG.getRegistry();
 		facteur = registry.createNPC(EntityType.PLAYER, "Facteur");
 		this.boite = coffre;
 		facteur.spawn(boite.getLocation());
@@ -47,6 +51,34 @@ public class PosteLocale extends Poste {
 
 	}
 	
+	public PosteLocale(SauvegardeClasse sc, PosteGenerale PG) {
+		name = sc.getNom();
+		Location loc = new Vector(sc.getCoord().get(0),sc.getCoord().get(1),sc.getCoord().get(2)).toLocation(Bukkit.getWorlds().get(0));
+		boite = (Chest) loc.getBlock().getState();
+		NPCRegistry registry = PG.getRegistry();
+		facteur = registry.createNPC(EntityType.PLAYER, "Facteur");
+		facteur.spawn(boite.getLocation());
+		this.PG=PG;
+		reseau_publique = new ArrayList<BALPublique>();
+		reseau_prive = new ArrayList<BALPrivee>();
+		facteur.data().set("origine",this);
+		facteur.data().set("mutex",false);
+		thread = new PosteLocaleRunnable(this);
+
+	}
+
+	public void addBALPublique(SauvegardeClasse sc){
+		Location loc = new Vector(sc.getCoord().get(0),sc.getCoord().get(1),sc.getCoord().get(2)).toLocation(Bukkit.getWorlds().get(0));
+		Chest c = (Chest) loc.getBlock().getState();
+		reseau_publique.add(new BALPublique(sc.getNom(),c));
+		Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("ServicePostal"), thread, 0, 15 * 20L);
+	}
+	public void addBALPrivee(SauvegardeClasse sc){
+		Location loc = new Vector(sc.getCoord().get(0),sc.getCoord().get(1),sc.getCoord().get(2)).toLocation(Bukkit.getWorlds().get(0));
+		Chest c = (Chest) loc.getBlock().getState();
+		reseau_prive.add(new BALPrivee(sc.getNom(),c));
+	}
+
 	public void addBALPublique(Block coffre, String nom) throws ServicePostalException{
 		
 		if(coffre.getType() != Material.CHEST) throw new NoChestException();

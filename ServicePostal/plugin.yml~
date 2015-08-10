@@ -2,7 +2,8 @@ name : ServicePostal
 main : com.bukkit.flodov.ServicePostal.ServicePostalMain
 version : 0.1
 commands :
- poste test
+ poste test :
   usage : /createBAL <nom> -publique|privee <proprietaire>
- poste
+ poste :
   usage : et ok !
+depend: [Citizens] // if CitizensAPI is required *make sure you check the Citizens version in onEnable*
