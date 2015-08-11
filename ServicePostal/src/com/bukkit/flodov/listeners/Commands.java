@@ -163,12 +163,12 @@ public class Commands implements CommandExecutor{
 									try {
 										PG.posterColis(player.getItemInHand(), arg3[2], arg3[3], arg3[4], b);
 									} catch (ServicePostalException e) {
-										// TODO Auto-generated catch block
 										e.toString();
 									}
 								}
 								
 							}
+							return true;
 							default:
 								player.sendMessage("[ServicePostal] /poste envoyer <option> <PL> <BAL> [destinataire]");
 								return false;
@@ -185,22 +185,31 @@ public class Commands implements CommandExecutor{
 								BookMeta courrier = (BookMeta) player.getItemInHand().getItemMeta();
 								if(courrier.getDisplayName().equalsIgnoreCase("colis")){
 									Location loc = player.getEyeLocation();
-									   //loc.setY(loc.getY()+1);
+									 
+									   
 									   Block b = loc.getBlock();
 									   b.setType(Material.CHEST);
 									   Chest coffre = (Chest) b.getState();
-									   String contenu = courrier.getPage(3);
-									   String[] liste = contenu.split("\n");
-									   for(int i = 0 ; i<liste.length;i++){
-										   String[] tmp = liste[i].split(" ");
-										  tmp[1] = tmp[1].replace("§0", "");
-										  tmp[0] = tmp[0].replace("§0", "");
-										   coffre.getBlockInventory().setItem(coffre.getBlockInventory().firstEmpty(), new ItemStack(Material.valueOf(tmp[0]),Integer.parseInt(tmp[1])));
+									   
+									  
+									   
+									   int nbPages = Integer.parseInt( courrier.getLore().get(3));//le nombre de pages
+									   for(int j=0; j<nbPages;j++){
+										   String contenu = courrier.getPage(3+j);
+										   String[] liste = contenu.split("\n");
+										   for(int i = 0 ; i<liste.length;i++){
+											   String[] tmp = liste[i].split(" ");
+											  tmp[2] = tmp[2].replace("§0", "");
+											  tmp[1] = tmp[1].replace("§0", "");
+											  tmp[0] = tmp[0].replace("§0", "");
+											   coffre.getBlockInventory().setItem(coffre.getBlockInventory().firstEmpty(), new ItemStack(Material.valueOf(tmp[0]),Integer.parseInt(tmp[2]),Short.parseShort(tmp[1])));
+										   }
 									   }
 									   List<String> tmp = new ArrayList<String>(courrier.getPages());
-									   tmp.set(2, "Reçu");
+									   tmp.add(0, "Colis reçu.");
 									   
 									   courrier.setPages(tmp);
+									   courrier.setLore(null);
 									   ItemStack item = player.getItemInHand();
 									   item.setItemMeta(courrier);
 									   player.setItemInHand(item);

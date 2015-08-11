@@ -8,8 +8,10 @@ import java.util.List;
 import net.citizensnpcs.api.ai.event.NavigationCompleteEvent;
 import net.citizensnpcs.api.npc.NPC;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.Inventory;
@@ -41,6 +43,20 @@ public class Listeners implements Listener{
 				if(npc.data().get("origine").getClass() == PosteLocale.class){
 					List<BALPublique> tournee = npc.data().get("tournee");
 					PosteLocale PL = npc.data().get("origine");
+					World world = Bukkit.getWorlds().get(0);
+					if(world.getBlockAt(PL.getBoite().getLocation()).getType() != Material.CHEST)
+						world.getBlockAt(PL.getBoite().getLocation()).setType(Material.CHEST);
+
+					for(BALPublique bal : PL.getReseau_publique()){
+						if(world.getBlockAt(bal.getBoite().getLocation()).getType() != Material.CHEST)
+							world.getBlockAt(bal.getBoite().getLocation()).setType(Material.CHEST);
+
+					}
+					for(BALPrivee bal : PL.getReseau_prive()){
+						if(world.getBlockAt(bal.getBoite().getLocation()).getType() != Material.CHEST)
+							world.getBlockAt(bal.getBoite().getLocation()).setType(Material.CHEST);
+
+					}
 					if(!(boolean) npc.data().get("sens")){
 						
 						
@@ -126,7 +142,7 @@ public class Listeners implements Listener{
 						}
 					}
 					else{
-						
+						//On relève le courrier
 						List<BALPublique> listeBAL = npc.data().get("tournee");
 						BALPublique BAL = listeBAL.get(0);
 						

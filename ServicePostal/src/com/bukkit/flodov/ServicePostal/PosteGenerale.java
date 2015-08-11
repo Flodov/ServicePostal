@@ -228,23 +228,6 @@ public class PosteGenerale extends Poste{
 		lettre.setItemMeta(tmp);
 		
 		
-
-		/*ItemStack writtenBook = new Material(Material.WRITTEN_BOOK);
-BookMeta bookMeta = (BookMeta) writtenBook.getItemMeta();
-bookMeta.setTitle(title);
-bookMeta.setAuthor(author);
-bookMeta.setPages(text);
-writtenBook.setItemMeta(bookMeta);
-*/
-		
-		/*
-		 * 
-		 * List<String> pages = new ArrayList<String>();
-pages.add("Hello, welcome to TimeVisualSale's server!"); // Page 1
-pages.add("Website: timevisualsales.com"); // Page 2
-pages.add("Hope you enjoy your stay/play!"); // Page 3
-		 */
-		
 	}
 	public boolean NpcDispo() {
 		return !(boolean) facteur.data().get("mutex");
@@ -292,7 +275,6 @@ pages.add("Hope you enjoy your stay/play!"); // Page 3
 					
 					facteur.data().set("sacoche", sacoche);
 					facteur.data().set("sens", true);
-					//facteur.getNavigator().setTarget(tournee.get(0).getBoite().getLocation());
 					facteur.teleport(tournee.get(0).getBoite().getLocation(), null);
 					tournee();
 				}
@@ -378,12 +360,20 @@ pages.add("Hope you enjoy your stay/play!"); // Page 3
 		
 		String contenu = new String();
 		Chest boite = (Chest) coffre.getState();
-		for(ItemStack item : boite.getBlockInventory()){
-			if(item != null)
-			contenu+=""+(item.getType()+" "+item.getAmount()+"\n");
-		}
-		
+		int nbStack = 1,nbPages = 1; 
 		List<String> pages = new ArrayList<String>( tmp.getPages());
+		
+		for(ItemStack item : boite.getBlockInventory()){
+			if(item != null){	
+				if(nbStack++> 13){
+					nbPages++;
+					nbStack=0;
+					pages.add(0,contenu);
+					contenu = "";
+				}
+			contenu+=""+(item.getType()+" "+item.getData().toItemStack().getDurability()+" "+item.getAmount()+"\n");
+			}
+		}
 		SimpleDateFormat formater = new SimpleDateFormat("'le' dd MMMM yyyy 'à' hh:mm:ss");
 		pages.add(0, contenu);
 		pages.add(0, "------------------\n    Cadre d'envoi\n------------------\n"+"Expéditeur : " +tmp.getAuthor()+"\nDestinataire : "+proprietaire_name+"\nAdresse : "+BAL_name+"\nLieu : "+PL_name+"\nDate : "+formater.format(new Date()));
@@ -395,6 +385,7 @@ pages.add("Hope you enjoy your stay/play!"); // Page 3
 		destination.add(PL_name);
 		destination.add(BAL_name);
 		destination.add(proprietaire_name);
+		destination.add(Integer.toString(nbPages));
 
 		tmp.setLore(destination);
 		lettre.setItemMeta(tmp);
