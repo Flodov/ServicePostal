@@ -32,6 +32,7 @@ import com.bukkit.flodov.exceptions.PGExistanteException;
 import com.bukkit.flodov.exceptions.PGNoFoundException;
 import com.bukkit.flodov.exceptions.PLExistanteException;
 import com.bukkit.flodov.exceptions.PLNoTrouveeException;
+import com.bukkit.flodov.exceptions.ReseauExistantException;
 import com.bukkit.flodov.exceptions.ServicePostalException;
 import com.bukkit.flodov.tasks.PNJPosteGeneralRunnable;
 
@@ -230,7 +231,7 @@ public class PosteGenerale extends Poste{
 		
 	}
 	public boolean NpcDispo() {
-		return !(boolean) facteur.data().get("mutex");
+		return !(boolean) facteur.data().get("mutex")&&!reseau.isEmpty();
 	}
 	
 	public void tournee(){
@@ -395,47 +396,52 @@ public class PosteGenerale extends Poste{
 	
 	public void save(){
 		
-		List<SauvegardeClasse> tab = new ArrayList<SauvegardeClasse>();
-		
-		//On ajoute la PG
-		tab.add(new SauvegardeClasse(getCoord(),TypeClasse.PG,facteur.getUniqueId(),null,this.name));
-		//on va ajouter chaque PL
-		for(PosteLocale PL : reseau){
-			tab.add(new SauvegardeClasse(PL.getCoord(),TypeClasse.PL,PL.getIDNPC(),null,PL.name));
+		if(init){
+			List<SauvegardeClasse> tab = new ArrayList<SauvegardeClasse>();
 			
-			for(BALPublique BAL : PL.getReseau_publique()){
-				tab.add(new SauvegardeClasse(BAL.getCoord(),TypeClasse.BALPublique, null,PL.getName(),BAL.getNom()));
+			//On ajoute la PG
+			tab.add(new SauvegardeClasse(getCoord(),TypeClasse.PG,facteur.getUniqueId(),null,this.name));
+			//on va ajouter chaque PL
+			for(PosteLocale PL : reseau){
+				tab.add(new SauvegardeClasse(PL.getCoord(),TypeClasse.PL,PL.getIDNPC(),null,PL.name));
+				
+				for(BALPublique BAL : PL.getReseau_publique()){
+					tab.add(new SauvegardeClasse(BAL.getCoord(),TypeClasse.BALPublique, null,PL.getName(),BAL.getNom()));
+				}
+				for(BALPrivee BAL : PL.getReseau_prive()){
+					tab.add(new SauvegardeClasse(BAL.getCoord(),TypeClasse.BALPrivee, null,PL.getName(),BAL.getNom()));
+				}
 			}
-			for(BALPrivee BAL : PL.getReseau_prive()){
-				tab.add(new SauvegardeClasse(BAL.getCoord(),TypeClasse.BALPrivee, null,PL.getName(),BAL.getNom()));
-			}
-		}
-		
-		
-		
-		try{
-            // On crée la sortie vers le fichier
-			File fichier = new File(ServicePostalMain.nomFichier);
 			
-			ObjectOutputStream  out = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(fichier)));
-			int longueur = tab.size();
-			out.writeInt(longueur);
 			
-            for(SauvegardeClasse tmp1 : tab ){
-            	out.writeObject(tmp1);
-            }
-            out.close();
-            
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-           
-        } catch (IOException e) {
-            e.printStackTrace();
-           
-        }
-		
+			
+			try{
+	            // On crée la sortie vers le fichier
+				File fichier = new File(ServicePostalMain.nomFichier);
+				
+				ObjectOutputStream  out = new ObjectOutputStream(new BufferedOutputStream(new FileOutputStream(fichier)));
+				int longueur = tab.size();
+				out.writeInt(longueur);
+				
+	            for(SauvegardeClasse tmp1 : tab ){
+	            	out.writeObject(tmp1);
+	            }
+	            out.close();
+	            
+	        } catch (FileNotFoundException e) {
+	            e.printStackTrace();
+	           
+	        } catch (IOException e) {
+	            e.printStackTrace();
+	           
+	        }
+			
 
-		
+		}
+		else{
+			File fichier = new File(ServicePostalMain.nomFichier);
+			fichier.delete();
+		}
 	}
 	
 	public NPCRegistry getRegistry(){
@@ -444,4 +450,82 @@ public class PosteGenerale extends Poste{
 	public void setRegistry(NPCRegistry r){
 		registry = r;
 	}
+	
+	public void removeBAL(String nom_BAL, String nom_PL,boolean type) throws ServicePostalException{
+		
+		boolean trouve = false;
+		PosteLocale PL=null;
+		for(PosteLocale tmp_PL : reseau){
+			if(tmp_PL.getName().equalsIgnoreCase(nom_PL)){
+				trouve = true;
+				PL = tmp_PL;
+				break;
+			}
+		}
+		
+		if(!trouve) throw new PLNoTrouveeException();
+		trouve = false;
+		if(type){
+			//public
+			for(BALPublique BAL : PL.getReseau_publique()){
+				if(BAL.getNom().equalsIgnoreCase(nom_BAL)){
+					trouve = true;
+					PL.removeBAL(BAL);
+					break;
+				}
+					
+			}
+			if(!trouve) throw new BALPriveeNoFoundException();
+		}
+		else{
+			//private
+			for(BALPrivee BAL : PL.getReseau_prive()){
+				if(BAL.getNom().equalsIgnoreCase(nom_BAL)){
+					trouve = true;
+					PL.removeBAL(BAL);
+					break;
+				}
+					
+			}
+			if(!trouve) throw new BALPriveeNoFoundException();
+		}
+		
+		
+	}
+	
+	public void removePL(String nomPL) throws ServicePostalException{
+		PosteLocale PL = null;
+		for(PosteLocale tmp : reseau){
+			if(tmp.getName().equalsIgnoreCase(nomPL)){
+				PL = tmp;
+				break;
+			}
+		}
+		if(PL == null) new PLNoTrouveeException();
+		
+		if(PL.getReseau_prive().isEmpty() && PL.getReseau_publique().isEmpty()){
+			PL.stop();
+			reseau.remove(PL);
+		}
+		else{
+			throw new ReseauExistantException();
+		}
+		
+		
+	}
+	
+	@SuppressWarnings("static-access")
+	public void removePG() throws ReseauExistantException{
+		if(reseau.isEmpty()){
+			facteur.destroy();
+			thread.stop();
+			
+			this.init = false;
+			
+		}
+		else{
+			throw new ReseauExistantException();
+		}
+	}
+
 }

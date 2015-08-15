@@ -171,23 +171,39 @@ public List<BALPrivee> getReseau_prive() {
 
 
 	public void NpcInitTournee(){
-		List<BALPublique> tournee = new ArrayList<BALPublique>();
-		for(BALPublique PL : reseau_publique){
-			tournee.add(PL);
-		}
-		facteur.data().remove("tournee");
-		facteur.data().set("tournee", tournee);
-		facteur.data().set("sens", true);
-		facteur.data().set("mutex",false);
-		bouge(reseau_publique.get(0).getBoite().getLocation());
-		facteur.data().set("mutex",true);
+			List<BALPublique> tournee = new ArrayList<BALPublique>();
+			for(BALPublique PL : reseau_publique){
+				tournee.add(PL);
+			}
+			facteur.data().remove("tournee");
+			facteur.data().set("tournee", tournee);
+			facteur.data().set("sens", true);
+			facteur.data().set("mutex",false);
+			bouge(reseau_publique.get(0).getBoite().getLocation());
+			facteur.data().set("mutex",true);
+		
 	}
 	
 	public void bouge(Location loc){
 		facteur.getNavigator().setTarget(loc);
 	}
 	public boolean NpcDispo(){
-		return !(boolean) facteur.data().get("mutex");
+		return !(boolean) facteur.data().get("mutex")&&!reseau_publique.isEmpty();
+	}
+	public void removeBAL(BALPublique BAL){
+		reseau_publique.remove(BAL);
+	}
+
+
+
+	public void removeBAL(BALPrivee bAL) {
+		reseau_prive.remove(bAL);
+		
+	}
+	public void stop(){
+		facteur.destroy();
+		thread.stop();
+		
 	}
 
 }

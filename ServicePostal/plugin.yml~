@@ -17,6 +17,10 @@ permissions :
       servicepostal.createbal.*: true
       servicepostal.envoyer: true
       servicepostal.recevoir: true
+      servicepostal.save: true
+      servicepostal.removebal: true
+      servicepostal.removepl: true
+      servicepostal.removepg: true
   servicepostal.createpg:
     description: Créer la Poste Générale
     default : false
@@ -43,4 +47,13 @@ permissions :
     default: false 
   servicepostal.save:
     description: Sauvegarde le Service Postal
+    default: false
+  servicepostal.removebal:
+    description: Supprimer une boite aux lettres
+    default: false
+  servicepostal.removepl:
+    description: Supprimer une poste locale
+    default: false
+  servicepostal.removepg:
+    description: Supprimer la poste generale
     default: false

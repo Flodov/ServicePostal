@@ -91,9 +91,12 @@ public class Commands implements CommandExecutor{
 								PG.addPL(loc.getBlock(), arg3[1]);
 							} catch (ServicePostalException e) {
 								e.toString(player);
+								return true;
 							} catch (Exception e) {
 								e.printStackTrace();
+								return true;
 							}
+							 player.sendMessage("[ServicePostal] Poste Locale créée.");
 							return true;
 						}
 						else{
@@ -122,7 +125,9 @@ public class Commands implements CommandExecutor{
 								PG.addBAL(b,type, arg3[1].toString(), arg3[3].toString());
 							} catch (ServicePostalException e) {
 								e.toString(player);
+								return true;
 							}
+							player.sendMessage("[ServicePostal] Boîte aux lettres créée.");
 							return true;
 						}
 						else{
@@ -230,6 +235,82 @@ public class Commands implements CommandExecutor{
 							player.sendMessage("[ServicePostal] Sauvegarde terminée");
 							return true;
 						}else{
+							player.sendMessage("[ServicePostal] Vous n'avez pas la permission.");
+							return true;
+						}
+					}
+					if(arg3[0].equalsIgnoreCase("removebal")){
+						if(player.hasPermission("removebal")){
+							if(arg3.length == 4){
+								boolean type;
+								switch(arg3[1]){
+								case("-public"):
+									type = true;
+									break;
+								case("-private"):
+									type = false;
+									break;
+								default:
+									player.sendMessage("[ServicePostal] /poste removebal <type : -public or -private> PL BAL");
+									return true;
+								}
+								try {
+									PG.removeBAL(arg3[3], arg3[2], type);
+								} catch (ServicePostalException e) {
+									// TODO Auto-generated catch block
+									e.toString(player);
+									return true;
+								}
+								
+								player.sendMessage("[ServicePostal] La boîte aux lettres a été supprimé.");
+								return true;
+							}
+							else{
+								player.sendMessage("[ServicePostal] /poste removebal <type : -public or -private> PL BAL");
+								return true;
+							}
+						}
+						else{
+							player.sendMessage("[ServicePostal] Vous n'avez pas la permission.");
+							return true;
+							}
+					}
+					if(arg3[0].equalsIgnoreCase("removePL")){
+						if(player.hasPermission("removePL")){
+							if(arg3.length == 2){
+								try {
+									PG.removePL(arg3[1]);
+								} catch (ServicePostalException e) {
+									e.toString(player);
+									return true;
+								}
+								player.sendMessage("[ServicePostal] Poste Locale supprimée.");
+								return true;
+							}
+							else{
+								player.sendMessage("[ServicePostal] /poste removePL name");
+								return true;
+							}
+						}
+						else{
+							player.sendMessage("[ServicePostal] Vous n'avez pas la permission.");
+							return true;
+						}
+					}
+					if(arg3[0].equalsIgnoreCase("removePG")){
+						if(player.hasPermission("removePG")){
+							
+								try {
+									PG.removePG();
+								} catch (ServicePostalException e) {
+									e.toString(player);
+									return true;
+								}
+								player.sendMessage("[ServicePostal] La Poste Générale a été supprimé.");
+								return true;
+							
+						}
+						else{
 							player.sendMessage("[ServicePostal] Vous n'avez pas la permission.");
 							return true;
 						}
