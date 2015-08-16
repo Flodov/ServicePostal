@@ -19,6 +19,7 @@ import org.bukkit.plugin.Plugin;
 
 import com.bukkit.flodov.ServicePostal.PosteGenerale;
 import com.bukkit.flodov.exceptions.ServicePostalException;
+import com.bukkit.flodov.exceptions.SessionPathMutexException;
 
 @SuppressWarnings("unused")
 public class Commands implements CommandExecutor{
@@ -240,7 +241,7 @@ public class Commands implements CommandExecutor{
 						}
 					}
 					if(arg3[0].equalsIgnoreCase("removebal")){
-						if(player.hasPermission("removebal")){
+						if(player.hasPermission("servicepostal.removebal")){
 							if(arg3.length == 4){
 								boolean type;
 								switch(arg3[1]){
@@ -276,7 +277,7 @@ public class Commands implements CommandExecutor{
 							}
 					}
 					if(arg3[0].equalsIgnoreCase("removePL")){
-						if(player.hasPermission("removePL")){
+						if(player.hasPermission("servicepostal.removePL")){
 							if(arg3.length == 2){
 								try {
 									PG.removePL(arg3[1]);
@@ -298,7 +299,7 @@ public class Commands implements CommandExecutor{
 						}
 					}
 					if(arg3[0].equalsIgnoreCase("removePG")){
-						if(player.hasPermission("removePG")){
+						if(player.hasPermission("servicepostal.removePG")){
 							
 								try {
 									PG.removePG();
@@ -316,6 +317,49 @@ public class Commands implements CommandExecutor{
 						}
 					}
 					
+					if(arg3[0].equalsIgnoreCase("setpath")){
+						if(player.hasPermission("servicepostal.setpath")){
+							if(arg3.length == 4){
+								boolean type;
+								switch(arg3[2]){
+								case("-public"): type = true;break;
+								case("-private"): type = false;break;
+								default: player.sendMessage("[ServicePostal] /poste setpath PL <type : -public ou -private> BAL");
+									return true;
+								}
+								
+								try {
+									PG.setPath(arg3[1], arg3[3], type, player);
+								} catch (ServicePostalException e) {
+									e.toString(player);
+									return true;
+								}
+								player.sendMessage("[ServicePostal] Vous pouvez commencer de tracer le chemin.");
+								return true;
+							}
+						}
+					}
+					if(arg3[0].equalsIgnoreCase("addStep")){
+						try {
+							PG.addStep(player);
+						} catch (ServicePostalException e) {
+							e.toString(player);
+							return true;
+						}
+						player.sendMessage("[ServicePostal] Etape ajoutée.");
+						return true;
+					}
+					
+					if(arg3[0].equalsIgnoreCase("stopStep")){
+						try {
+							PG.stopStep(player);
+						} catch (SessionPathMutexException e) {
+							e.toString(player);
+							return true;
+						}
+						player.sendMessage("[ServicePostal] Chemin terminé.");
+						return true;
+					}
 				}
 				
 				return false;

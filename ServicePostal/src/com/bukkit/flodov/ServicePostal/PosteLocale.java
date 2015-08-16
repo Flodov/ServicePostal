@@ -29,8 +29,13 @@ public class PosteLocale extends Poste {
 	protected List<BALPrivee>  reseau_prive;
 	private PosteLocaleRunnable thread;
 	
-	public PosteLocale(){
-		
+	public PosteLocale(PosteLocale PL){
+		this.PG = PL.PG;
+		reseau_publique = new ArrayList<BALPublique>(PL.getReseau_publique());
+		reseau_prive = new ArrayList<BALPrivee>(PL.getReseau_prive());
+		thread = PL.thread;
+		name = PL.getName();
+		boite = PL.getBoite();
 	}
 
 
@@ -70,13 +75,25 @@ public class PosteLocale extends Poste {
 	public void addBALPublique(SauvegardeClasse sc){
 		Location loc = new Vector(sc.getCoord().get(0),sc.getCoord().get(1),sc.getCoord().get(2)).toLocation(Bukkit.getWorlds().get(0));
 		Chest c = (Chest) loc.getBlock().getState();
-		reseau_publique.add(new BALPublique(sc.getNom(),c));
+		
+		List<Location> chemin = new ArrayList<Location>();
+		for(List<Integer> tmp : sc.getChemin()){
+			loc = new Vector(tmp.get(0),tmp.get(1),tmp.get(2)).toLocation(Bukkit.getWorlds().get(0));
+			chemin.add(loc);
+		}
+		
+		reseau_publique.add(new BALPublique(sc.getNom(),c,chemin));
 		Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("ServicePostal"), thread, 0, 15 * 20L);
 	}
 	public void addBALPrivee(SauvegardeClasse sc){
 		Location loc = new Vector(sc.getCoord().get(0),sc.getCoord().get(1),sc.getCoord().get(2)).toLocation(Bukkit.getWorlds().get(0));
 		Chest c = (Chest) loc.getBlock().getState();
-		reseau_prive.add(new BALPrivee(sc.getNom(),c));
+		List<Location> chemin = new ArrayList<Location>();
+		for(List<Integer> tmp : sc.getChemin()){
+			loc = new Vector(tmp.get(0),tmp.get(1),tmp.get(2)).toLocation(Bukkit.getWorlds().get(0));
+			chemin.add(loc);
+		}
+		reseau_prive.add(new BALPrivee(sc.getNom(),c,chemin));
 	}
 
 	public void addBALPublique(Block coffre, String nom) throws ServicePostalException{
@@ -172,15 +189,19 @@ public List<BALPrivee> getReseau_prive() {
 
 	public void NpcInitTournee(){
 			List<BALPublique> tournee = new ArrayList<BALPublique>();
-			for(BALPublique PL : reseau_publique){
-				tournee.add(PL);
+			for(BALPublique bal : reseau_publique){
+				if(bal.pret) tournee.add(bal);
 			}
-			facteur.data().remove("tournee");
-			facteur.data().set("tournee", tournee);
-			facteur.data().set("sens", true);
-			facteur.data().set("mutex",false);
-			bouge(reseau_publique.get(0).getBoite().getLocation());
-			facteur.data().set("mutex",true);
+			if(!tournee.isEmpty()){
+				facteur.data().set("tournee", tournee);
+				facteur.data().set("sens", true);
+				facteur.data().set("mutex",false);
+				facteur.data().set("chemin", tournee.get(0).getChemin());
+				facteur.data().set("indice_chemin",0);
+				//bouge(reseau_publique.get(0).getBoite().getLocation());
+				bouge(tournee.get(0).getChemin().get(0));//on l'envoie sur la premiere etape du chemin
+				facteur.data().set("mutex",true);
+			}
 		
 	}
 	

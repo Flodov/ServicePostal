@@ -20,7 +20,6 @@ import org.bukkit.inventory.meta.BookMeta;
 
 import com.bukkit.flodov.ServicePostal.BALPrivee;
 import com.bukkit.flodov.ServicePostal.BALPublique;
-import com.bukkit.flodov.ServicePostal.Poste;
 import com.bukkit.flodov.ServicePostal.PosteLocale;
 
 
@@ -39,10 +38,46 @@ public class Listeners implements Listener{
 		if(npc.data().has("origine")){
 		
 			if(npc.data().get("origine").getClass() == PosteLocale.class){
-				
-				if(npc.data().get("origine").getClass() == PosteLocale.class){
+			
 					List<BALPublique> tournee = npc.data().get("tournee");
 					PosteLocale PL = npc.data().get("origine");
+					
+					//on controle s'il est encore en train de marcher
+					List<Location> chemin = npc.data().get("chemin");
+					if(chemin != null){
+						//on marche
+						boolean sens = npc.data().get("sens");//Quel sens ?
+						int indice = npc.data().get("indice_chemin");
+						if(sens){
+							//aller
+							if(chemin.size() != indice+1){
+								//si on n'est pas au bout 
+								npc.getNavigator().setTarget(chemin.get(++indice));
+								npc.data().set("indice_chemin", indice);
+								return;
+							}
+							else{
+								//on est au bout !
+							}
+							
+						}else{
+							//retour
+							if(indice-1 >= 0){
+								//si on n'est pas au bout
+								npc.getNavigator().setTarget(chemin.get(--indice));
+								npc.data().set("indice_chemin", indice);
+								return;
+							}
+							else{
+								//on est au bout !
+							}
+						}
+					
+						//c'est pas beau ... je sais ... mais j'ai pas la foi pour modifier
+					}
+					
+					
+					
 					World world = Bukkit.getWorlds().get(0);
 					if(world.getBlockAt(PL.getBoite().getLocation()).getType() != Material.CHEST)
 						world.getBlockAt(PL.getBoite().getLocation()).setType(Material.CHEST);
@@ -85,7 +120,10 @@ public class Listeners implements Listener{
 						//On prépare la suite
 						if(tournee.size() != 0){
 							npc.data().set("sens", true);
-							npc.getNavigator().setTarget(tournee.get(0).getBoite().getLocation());
+							npc.data().set("chemin", tournee.get(0).getChemin());
+							npc.data().set("indice_chemin", 0);
+							npc.getNavigator().setTarget(tournee.get(0).getChemin().get(0));
+							//npc.getNavigator().setTarget(tournee.get(0).getBoite().getLocation());
 							
 						}
 						else{
@@ -98,14 +136,16 @@ public class Listeners implements Listener{
 										if(courrier.hasLore()){
 											List<String> adresse = courrier.getLore();
 											if(adresse.get(0).equalsIgnoreCase(PL.getName())){
-												for(BALPrivee BAL : PL.getReseau_prive()){
-													if(BAL.getNom().equalsIgnoreCase(adresse.get(1))){
+												for(BALPrivee bal : PL.getReseau_prive()){
+													if(bal.getNom().equalsIgnoreCase(adresse.get(1)) && bal.estPret()){
 														//on a trouvé la BAL, il faut envoyer le PNJ
 														npc.data().set("main", item);
 														npc.data().set("sens", true);
 														PL.getBoite().getBlockInventory().remove(item);
-														npc.getNavigator().setTarget(BAL.getBoite().getLocation());
-													
+														//npc.getNavigator().setTarget(bal.getBoite().getLocation());
+														npc.data().set("chemin", bal.getChemin() );
+														npc.data().set("indice_chemin", 0);
+														npc.getNavigator().setTarget(bal.getChemin().get(0));
 														break;
 													}
 												}
@@ -136,7 +176,10 @@ public class Listeners implements Listener{
 								BAL.getBoite().getBlockInventory().addItem(item);
 								npc.data().set("main",null);
 								//npc.data().set("sacoche", new ArrayList<BookMeta>());
-								npc.getNavigator().setTarget(PL.getBoite().getLocation());
+								//npc.getNavigator().setTarget(PL.getBoite().getLocation());
+								npc.data().set("chemin", BAL.getChemin());
+								npc.data().set("indice_chemin", BAL.getChemin().size()-1);
+								npc.getNavigator().setTarget(BAL.getChemin().get(BAL.getChemin().size()-1));
 								break;
 							}
 						}
@@ -160,7 +203,10 @@ public class Listeners implements Listener{
 							}
 						}
 						npc.data().set("sacoche", sacoche);	
-						npc.getNavigator().setTarget((Location) ((Poste) npc.data().get("origine")).getBoite().getLocation());
+						//npc.getNavigator().setTarget((Location) ((Poste) npc.data().get("origine")).getBoite().getLocation());
+						npc.data().set("chemin", BAL.getChemin());
+						npc.data().set("indice_chemin", BAL.getChemin().size()-1);
+						npc.getNavigator().setTarget(BAL.getChemin().get(BAL.getChemin().size()-1));
 					}
 				}
 					
@@ -170,4 +216,4 @@ public class Listeners implements Listener{
 	}
 	
 	
-}
+

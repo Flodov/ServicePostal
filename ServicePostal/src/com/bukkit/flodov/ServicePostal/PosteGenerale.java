@@ -22,11 +22,13 @@ import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.Chest;
 import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.util.Vector;
 
 import com.bukkit.flodov.exceptions.BALPriveeNoFoundException;
+import com.bukkit.flodov.exceptions.EtapeTropLoinException;
 import com.bukkit.flodov.exceptions.NoChestException;
 import com.bukkit.flodov.exceptions.PGExistanteException;
 import com.bukkit.flodov.exceptions.PGNoFoundException;
@@ -34,6 +36,7 @@ import com.bukkit.flodov.exceptions.PLExistanteException;
 import com.bukkit.flodov.exceptions.PLNoTrouveeException;
 import com.bukkit.flodov.exceptions.ReseauExistantException;
 import com.bukkit.flodov.exceptions.ServicePostalException;
+import com.bukkit.flodov.exceptions.SessionPathMutexException;
 import com.bukkit.flodov.tasks.PNJPosteGeneralRunnable;
 
 public class PosteGenerale extends Poste{
@@ -50,6 +53,7 @@ public class PosteGenerale extends Poste{
 	protected List<PosteLocale> reseau;
 	protected String nomFichier = "saveSP";
 	protected static NPCRegistry registry;
+	protected List<SessionPath> sessions = new ArrayList<SessionPath>();
 	
 	public PosteGenerale(){}
 	public PosteGenerale(NPC facteur, Chest boite, List<PosteLocale> reseau) {
@@ -400,16 +404,16 @@ public class PosteGenerale extends Poste{
 			List<SauvegardeClasse> tab = new ArrayList<SauvegardeClasse>();
 			
 			//On ajoute la PG
-			tab.add(new SauvegardeClasse(getCoord(),TypeClasse.PG,facteur.getUniqueId(),null,this.name));
+			tab.add(new SauvegardeClasse(getCoord(),TypeClasse.PG,facteur.getUniqueId(),null,this.name,null));
 			//on va ajouter chaque PL
 			for(PosteLocale PL : reseau){
-				tab.add(new SauvegardeClasse(PL.getCoord(),TypeClasse.PL,PL.getIDNPC(),null,PL.name));
+				tab.add(new SauvegardeClasse(PL.getCoord(),TypeClasse.PL,PL.getIDNPC(),null,PL.name,null));
 				
 				for(BALPublique BAL : PL.getReseau_publique()){
-					tab.add(new SauvegardeClasse(BAL.getCoord(),TypeClasse.BALPublique, null,PL.getName(),BAL.getNom()));
+					tab.add(new SauvegardeClasse(BAL.getCoord(),TypeClasse.BALPublique, null,PL.getName(),BAL.getNom(),BAL.getCoords()));
 				}
 				for(BALPrivee BAL : PL.getReseau_prive()){
-					tab.add(new SauvegardeClasse(BAL.getCoord(),TypeClasse.BALPrivee, null,PL.getName(),BAL.getNom()));
+					tab.add(new SauvegardeClasse(BAL.getCoord(),TypeClasse.BALPrivee, null,PL.getName(),BAL.getNom(),BAL.getCoords()));
 				}
 			}
 			
@@ -526,6 +530,97 @@ public class PosteGenerale extends Poste{
 		else{
 			throw new ReseauExistantException();
 		}
+	}
+	
+	public void setPath(String nom_PL, String nom_BAL, boolean type,Player p) throws ServicePostalException{
+		
+		PosteLocale PL = null;
+		for(PosteLocale tmp : reseau){
+			if(tmp.getName().equalsIgnoreCase(nom_PL)) PL = new PosteLocale(tmp);
+		}
+		
+		if(PL == null) throw new PLNoTrouveeException();
+		
+		BAL bal = null;
+		if(type){
+			for(BALPublique tmp : PL.getReseau_publique()){
+				if(tmp.getNom().equalsIgnoreCase(nom_BAL)) bal = new BALPublique(tmp);
+			}
+			
+		}else{
+			for(BALPrivee tmp : PL.getReseau_prive()){
+				if(tmp.getNom().equalsIgnoreCase(nom_BAL)) bal = new BALPrivee(tmp);
+			}
+		}
+		
+		if(bal == null) throw new BALPriveeNoFoundException();
+		//La BAL et la PL existe
+		bal.pret = false;
+		bal.clearChemin();
+		bal.getChemin().add(PL.getBoite().getLocation());
+		for(SessionPath s : sessions){
+			if(s.getBal().equals(bal) || s.getJoueur().equals(p.getUniqueId())) throw new SessionPathMutexException();
+		}
+		
+		sessions.add(new SessionPath(p.getUniqueId(),bal,PL.getName(),type));
+		p.teleport(PL.getBoite().getLocation());
+		
+	}
+	
+	public void addStep(Player p) throws ServicePostalException{
+		
+		SessionPath s = null;
+		for(SessionPath tmp : sessions){
+			if(tmp.getJoueur().equals(p.getUniqueId())){
+				s = new SessionPath(tmp);
+			}
+		}
+		if(s==null) throw new SessionPathMutexException();
+		
+			if(s.getBal().getChemin().get(s.getBal().getChemin().size()-1).distance(p.getLocation()) <= 10.0)
+				s.getBal().getChemin().add(p.getLocation());
+			else throw new EtapeTropLoinException();
+
+	}
+	
+	public void stopStep(Player p) throws SessionPathMutexException{
+		SessionPath s = null;
+		for(SessionPath tmp : sessions){
+			if(tmp.getJoueur().equals(p.getUniqueId())){
+				s = tmp;
+				break;
+			}
+		}
+		if(s==null) throw new SessionPathMutexException();
+		s.getBal().getChemin().add(s.getBal().getBoite().getLocation());
+		s.getBal().pret = true;
+		PosteLocale PL = null;
+		for(PosteLocale tmp : reseau){
+			if(tmp.getName().equalsIgnoreCase(s.getNom_PL())){
+				PL = tmp;
+				break;
+			}
+		}
+		BAL bal = null;
+		if(s.isType()){
+			for(BALPublique tmp : PL.getReseau_publique()){
+				if(tmp.getNom().equalsIgnoreCase(s.getBal().getNom())){
+					bal = tmp;
+					break;
+				}
+			}
+		}else{
+			for(BALPrivee tmp : PL.getReseau_prive()){
+				if(tmp.getNom().equalsIgnoreCase(s.getBal().getNom())){
+					bal = tmp;
+					break;
+				}
+			}
+		}
+		bal.setChemin(s.getBal().getChemin());
+		bal.pret = true;
+		sessions.remove(s);
+		
 	}
 
 }
