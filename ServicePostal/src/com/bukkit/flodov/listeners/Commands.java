@@ -360,6 +360,31 @@ public class Commands implements CommandExecutor{
 						player.sendMessage("[ServicePostal] Chemin terminé.");
 						return true;
 					}
+					if(arg3[0].equalsIgnoreCase("liste")){
+						if(player.hasPermission("servicepostal.liste")){
+							switch(arg3.length){
+							case(1):
+								//poste liste
+								PG.liste("", "", player);
+								break;
+							case(2):
+								//poste liste <PL> -> affiche tout
+								PG.liste(arg3[1], "", player);
+								break;
+							case(3):
+								//poste liste <PL> -option
+								PG.liste(arg3[1], arg3[2], player);
+								break;
+							default:
+								player.sendMessage("[ServicePostal] /poste liste [ville] [-option]");
+								return true;
+							}
+							return true;
+						}else{
+							player.sendMessage("[ServicePostal] Vous n'avez pas la permission.");
+							return true;
+						}
+					}
 				}
 				
 				return false;

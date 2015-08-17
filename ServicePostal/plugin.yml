@@ -34,6 +34,7 @@ permissions :
     children:
       servicepostal.createbal.public: true
       servicepostal.createbal.private: true
+      servicepostal.setpath: true
   servicepostal.createbal.public:
     description: Créer une boite aux lettres publique
     default: false
@@ -57,4 +58,7 @@ permissions :
     default: false
   servicepostal.removepg:
     description: Supprimer la poste generale
+    default: false
+  servicepostal.setpath:
+    description: Definir le chemin d'une PL à une BAL
     default: false

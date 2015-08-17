@@ -43,7 +43,7 @@ public class PosteLocale extends Poste {
 	public PosteLocale(PosteGenerale PG,Chest coffre, String name) {
 		
 		NPCRegistry registry = PG.getRegistry();
-		facteur = registry.createNPC(EntityType.PLAYER, "Facteur");
+		facteur = registry.createNPC(EntityType.PLAYER, ServicePostalMain.config.getString("nomPNJ.PL"));
 		this.boite = coffre;
 		facteur.spawn(boite.getLocation());
 		this.name = name;
@@ -61,7 +61,7 @@ public class PosteLocale extends Poste {
 		Location loc = new Vector(sc.getCoord().get(0),sc.getCoord().get(1),sc.getCoord().get(2)).toLocation(Bukkit.getWorlds().get(0));
 		boite = (Chest) loc.getBlock().getState();
 		NPCRegistry registry = PG.getRegistry();
-		facteur = registry.createNPC(EntityType.PLAYER, "Facteur");
+		facteur = registry.createNPC(EntityType.PLAYER, ServicePostalMain.config.getString("nomPNJ.PL"));
 		facteur.spawn(boite.getLocation());
 		this.PG=PG;
 		reseau_publique = new ArrayList<BALPublique>();
@@ -83,8 +83,7 @@ public class PosteLocale extends Poste {
 		}
 		
 		reseau_publique.add(new BALPublique(sc.getNom(),c,chemin));
-		Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("ServicePostal"), thread, 0, 15 * 20L);
-	}
+		Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("ServicePostal"), thread, 0, ServicePostalMain.config.getInt("parametres.tourneePL") * 20L);	}
 	public void addBALPrivee(SauvegardeClasse sc){
 		Location loc = new Vector(sc.getCoord().get(0),sc.getCoord().get(1),sc.getCoord().get(2)).toLocation(Bukkit.getWorlds().get(0));
 		Chest c = (Chest) loc.getBlock().getState();
@@ -123,7 +122,7 @@ public class PosteLocale extends Poste {
 			}
 			
 		}
-		Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("ServicePostal"), thread, 0, 15 * 20L);
+		Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("ServicePostal"), thread, 0, ServicePostalMain.config.getInt("parametres.tourneePL") * 20L);
 		//On vérifie si le nom n'est pas déjà pris
 		Iterator<BALPublique> ite2 = reseau_publique.iterator();
 		while(ite2.hasNext()){

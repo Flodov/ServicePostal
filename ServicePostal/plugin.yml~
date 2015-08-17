@@ -15,6 +15,7 @@ permissions :
     children: 
       servicepostal.createpg: true
       servicepostal.createbal.*: true
+      servicepostal.createpl: true
       servicepostal.envoyer: true
       servicepostal.recevoir: true
       servicepostal.save: true

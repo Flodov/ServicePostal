@@ -90,6 +90,11 @@ public class ServicePostalMain extends JavaPlugin {
 	}
 	public void loadConfig() {
 		config = this.getConfig();
+		config.addDefault("parametres.tourneePG", 15);
+		config.addDefault("parametres.tourneePL", 15);
+		config.addDefault("nomPNJ.PG", "Intendant");
+		config.addDefault("nomPNJ.PL", "Facteur");
+		
 		config.options().copyDefaults(true);
 		this.saveConfig();
 		}

@@ -66,15 +66,14 @@ public class PosteGenerale extends Poste{
 		Location loc = new Vector(sc.getCoord().get(0),sc.getCoord().get(1),sc.getCoord().get(2)).toLocation(Bukkit.getWorlds().get(0));
 		boite = (Chest) loc.getBlock().getState();
 		registry = CitizensAPI.getNPCRegistry();
-		facteur = registry.createNPC(EntityType.PLAYER, "Intendant");
+		facteur = registry.createNPC(EntityType.PLAYER, ServicePostalMain.config.getString("nomPNJ.PG"));
 		facteur.spawn(boite.getLocation());
 		name = sc.getNom();
 		thread = new PNJPosteGeneralRunnable(this);
 		facteur.data().set("origine", this);
 		facteur.data().set("mutex", false);
 		reseau = new ArrayList<PosteLocale>();
-		Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("ServicePostal"), thread, 0, 15 * 20L);
-	}
+		Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("ServicePostal"), thread, 0, ServicePostalMain.config.getInt("parametres.tourneePG") * 20L);	}
 	
 	public void initialisation(Block block) throws Exception{
 		//On initialise un coffre + npc pour la PG
@@ -85,7 +84,7 @@ public class PosteGenerale extends Poste{
 				
 				registry = CitizensAPI.getNPCRegistry();
 				//On crée le PNJ
-				facteur = registry.createNPC(EntityType.PLAYER, "Intendant");
+				facteur = registry.createNPC(EntityType.PLAYER, ServicePostalMain.config.getString("nomPNJ.PG"));
 				facteur.spawn(boite.getLocation());
 				reseau = new ArrayList<PosteLocale>();
 				name = "PosteGénérale";
@@ -93,7 +92,7 @@ public class PosteGenerale extends Poste{
 				thread = new PNJPosteGeneralRunnable(this);
 				facteur.data().set("origine", this);
 				facteur.data().set("mutex", false);
-				Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("ServicePostal"), thread, 0, 15 * 20L);
+				Bukkit.getScheduler().scheduleSyncRepeatingTask(Bukkit.getPluginManager().getPlugin("ServicePostal"), thread, 0, ServicePostalMain.config.getInt("parametres.tourneePG") * 20L);
 			}
 			else{
 				throw new NoChestException();
@@ -621,6 +620,81 @@ public class PosteGenerale extends Poste{
 		bal.pret = true;
 		sessions.remove(s);
 		
+	}
+	
+	public void liste(String nom_PL, String type, Player p){
+		if(nom_PL.isEmpty()){
+			//poste liste
+			p.sendMessage("----------Plan du réseau -------");
+			p.sendMessage("Postes Locales :");
+			for(PosteLocale tmp : reseau){
+				p.sendMessage(" - "+tmp.getName()+"\n");
+			}
+			
+		}else{
+				
+			if(type.isEmpty()){
+				//poste liste <ville>
+				
+				PosteLocale PL = null;
+				for(PosteLocale tmp : reseau){
+					if(tmp.getName().equalsIgnoreCase(nom_PL)) PL = new PosteLocale(tmp);
+				}
+				
+				if(PL==null){
+					p.sendMessage("Poste Locale inconnue, veuillez consulter le plan.");
+					liste("","",p);
+					return;
+				}
+				p.sendMessage("----------Plan du réseau -------");
+				p.sendMessage("Poste Locale : "+nom_PL);
+				p.sendMessage("Boîtes aux lettres publiques :");
+				for(BAL bal : PL.getReseau_publique()){
+					p.sendMessage(" - "+bal.getNom());
+				}
+				
+				p.sendMessage("Boîtes aux lettres privées :");
+				for(BAL bal : PL.getReseau_prive()){
+					p.sendMessage(" - "+bal.getNom());
+				}
+				
+			}else{
+				//poste liste <ville> -option
+				PosteLocale PL = null;
+				for(PosteLocale tmp : reseau){
+					if(tmp.getName().equalsIgnoreCase(nom_PL)) PL = new PosteLocale(tmp);
+				}
+				
+				if(PL==null){
+					p.sendMessage("Poste Locale inconnue, veuillez consulter le plan.");
+					liste("","",p);
+					return;
+				}
+				p.sendMessage("----------Plan du réseau -------");
+				p.sendMessage("Poste Locale : "+nom_PL);
+				
+				
+				switch(type){
+				case("-public"):
+					for(BAL bal : PL.getReseau_publique()){
+						p.sendMessage(" - "+bal.getNom());
+					}
+					break;
+				
+				case("-private"):
+					for(BAL bal : PL.getReseau_prive()){
+						p.sendMessage(" - "+bal.getNom());
+					}
+					break;
+				
+				default:
+					liste(nom_PL,"",p);
+					break;
+				}
+			}
+			
+			
+		}
 	}
 
 }
