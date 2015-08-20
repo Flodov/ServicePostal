@@ -12,6 +12,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
+import org.bukkit.block.Chest;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.inventory.Inventory;
@@ -38,10 +39,8 @@ public class Listeners implements Listener{
 		if(npc.data().has("origine")){
 		
 			if(npc.data().get("origine").getClass() == PosteLocale.class){
-			
 					List<BALPublique> tournee = npc.data().get("tournee");
 					PosteLocale PL = npc.data().get("origine");
-					
 					//on controle s'il est encore en train de marcher
 					List<Location> chemin = npc.data().get("chemin");
 					if(chemin != null){
@@ -98,7 +97,9 @@ public class Listeners implements Listener{
 						//A chaque fois qu'il rentre
 						List<BookMeta> sacoche =  npc.data().get("sacoche");
 						ItemStack tmp = new ItemStack(Material.WRITTEN_BOOK);
-						int i = PL.getBoite().getBlockInventory().firstEmpty();
+						//int i = PL.getBoite().getBlockInventory().firstEmpty();
+						Chest boite = (Chest) world.getBlockAt(PL.getBoite().getLocation()).getState();
+						int i = boite.getBlockInventory().firstEmpty();
 						if(sacoche != null && tournee !=  null){
 							for(BookMeta item : sacoche){
 								
@@ -108,7 +109,7 @@ public class Listeners implements Listener{
 								item.setPages(contenu);
 								tmp.setItemMeta(item);
 								
-								PL.getBoite().getBlockInventory().setItem(i++, tmp);
+								boite.getBlockInventory().setItem(i++, tmp);
 							}
 							sacoche.clear();
 							sacoche = null;
@@ -129,7 +130,8 @@ public class Listeners implements Listener{
 						else{
 							//tournée terminée
 							//Il faut distribuer le courrier ramassé
-							for(ItemStack item : PL.getBoite().getBlockInventory()){
+							//Chest boite = (Chest) world.getBlockAt(PL.getBoite().getLocation()).getState();
+							for(ItemStack item : boite.getBlockInventory()){
 								if(item != null){
 									if(item.getType() == Material.WRITTEN_BOOK){
 										BookMeta courrier = (BookMeta) item.getItemMeta();
@@ -141,12 +143,12 @@ public class Listeners implements Listener{
 														//on a trouvé la BAL, il faut envoyer le PNJ
 														npc.data().set("main", item);
 														npc.data().set("sens", true);
-														PL.getBoite().getBlockInventory().remove(item);
+														boite.getBlockInventory().remove(item);
 														//npc.getNavigator().setTarget(bal.getBoite().getLocation());
 														npc.data().set("chemin", bal.getChemin() );
 														npc.data().set("indice_chemin", 0);
 														npc.getNavigator().setTarget(bal.getChemin().get(0));
-														break;
+														return;
 													}
 												}
 												
@@ -173,7 +175,8 @@ public class Listeners implements Listener{
 						BookMeta courrier = (BookMeta) item.getItemMeta();
 						for(BALPrivee BAL : PL.getReseau_prive()){
 							if(BAL.getNom().equalsIgnoreCase(courrier.getLore().get(1))){
-								BAL.getBoite().getBlockInventory().addItem(item);
+								Chest boite = (Chest) world.getBlockAt(BAL.getBoite().getLocation()).getState();
+								boite.getBlockInventory().addItem(item);
 								npc.data().set("main",null);
 								//npc.data().set("sacoche", new ArrayList<BookMeta>());
 								//npc.getNavigator().setTarget(PL.getBoite().getLocation());
@@ -188,8 +191,8 @@ public class Listeners implements Listener{
 						//On relève le courrier
 						List<BALPublique> listeBAL = npc.data().get("tournee");
 						BALPublique BAL = listeBAL.get(0);
-						
-						Inventory inventaire = BAL.getBoite().getBlockInventory();
+						Chest boite = (Chest) world.getBlockAt(BAL.getBoite().getLocation()).getState();
+						Inventory inventaire = boite.getBlockInventory();
 						List<BookMeta> sacoche = new ArrayList<BookMeta>();
 						for(ItemStack item : inventaire.getContents()){
 							if(item!=null){
